@@ -9,6 +9,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.12"
 sqlparse = "^0.4.4"
+sqlglot = "^20.9.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.12.1"

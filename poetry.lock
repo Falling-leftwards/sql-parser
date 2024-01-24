@@ -178,6 +178,21 @@ pluggy = ">=0.12,<2.0"
 testing = ["argcomplete", "attrs (>=19.2.0)", "hypothesis (>=3.56)", "mock", "nose", "pygments (>=2.7.2)", "requests", "setuptools", "xmlschema"]
 
 [[package]]
+name = "sqlglot"
+version = "20.9.0"
+description = "An easily customizable SQL parser and transpiler"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "sqlglot-20.9.0-py3-none-any.whl", hash = "sha256:6065487f838e5ac097ab68e510254696502024719be5e344cad6cae726620980"},
+    {file = "sqlglot-20.9.0.tar.gz", hash = "sha256:0b62ea136dcd5835d1a003e598d834ace36dfc1104d5cbabf5a1429993105de4"},
+]
+
+[package.extras]
+dev = ["autoflake", "black", "duckdb (>=0.6)", "isort", "maturin (>=1.4,<2.0)", "mypy (>=0.990)", "pandas", "pdoc", "pre-commit", "pyspark", "python-dateutil", "types-python-dateutil"]
+rs = ["sqlglotrs (==0.1.0)"]
+
+[[package]]
 name = "sqlparse"
 version = "0.4.4"
 description = "A non-validating SQL parser."
@@ -196,4 +211,4 @@ test = ["pytest", "pytest-cov"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "0d3fbd5b8ba8ecfae228c783925cf7c17eeb9836f5fe466dcab3e15171659ac1"
+content-hash = "63051364df1cb80226085ab7f9d0be8ea3da2ff777ffa20ad13bacce3b35c87a"

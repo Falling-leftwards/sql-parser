@@ -1,15 +1,19 @@
-import sqlparse
+from sqlglot import parse_one, exp
+
 
 class QueryParser:
     def __init__(self, query):
         self.query = query
         self.query_type = None
+        self.database = None
         self.table = None
         self._parse()
 
     def _parse(self):
-        query_type = sqlparse.parse(self.query)
-        parsed  = sqlparse.parse(self.query)
-        self.query_type = query_type[0].get_type()
-        print([str(t) for t in parsed[0].tokens if t.ttype is None][0])
-        print([t.ttype for t in parsed[0].tokens])
+        for table in parse_one(self.query).find_all(exp.Table):
+            self.table = table.name
+            self.database = table.db
+        if parse_one(self.query).find(exp.Select):
+            self.query_type = 'SELECT'
+        elif parse_one(self.query).find(exp.Drop):
+            self.query_type = 'DROP'
