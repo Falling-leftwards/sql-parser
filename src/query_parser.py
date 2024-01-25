@@ -11,8 +11,12 @@ class QueryParser:
 
     def _parse(self):
         for table in parse_one(self.query).find_all(exp.Table):
-            self.table = table.name
-            self.database = table.db
+            if table.db == '' and table.name != '':
+                self.table = ''
+                self.database = str.lower(table.name)
+            elif table.db != '' and table.name != '':
+                self.table = str.lower(table.name)
+                self.database = str.lower(table.db)
         if parse_one(self.query).find(exp.Select):
             self.query_type = 'SELECT'
         elif parse_one(self.query).find(exp.Drop):

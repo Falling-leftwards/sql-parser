@@ -9,7 +9,7 @@ def simple_query():
 
 @pytest.fixture
 def lower_case_simple_query():
-    query = """select column_A from table_A"""
+    query = """select column_A from db1.table_A"""
     return query
 
 
