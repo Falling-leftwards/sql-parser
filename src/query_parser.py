@@ -20,7 +20,14 @@ class QueryParser:
             elif table.db == '' and table.name == '':
                 self.table = None
                 self.database = None
-        if parse_one(self.query).find(exp.Select):
-            self.query_type = 'SELECT'
-        elif parse_one(self.query).find(exp.Drop):
-            self.query_type = 'DROP'
+
+        split_query = str.split(self.query)
+
+        if split_query[0].upper() in ['ALTER', 'CREATE']:
+            self.query_type = split_query[0:1].upper()
+        else:
+            self.query_type = split_query[0].upper()
+#        if parse_one(self.query).find(exp.Select):
+#            self.query_type = 'SELECT'
+#        elif parse_one(self.query).find(exp.Drop):
+#            self.query_type = 'DROP'
