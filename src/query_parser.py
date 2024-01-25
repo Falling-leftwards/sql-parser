@@ -17,6 +17,9 @@ class QueryParser:
             elif table.db != '' and table.name != '':
                 self.table = str.lower(table.name)
                 self.database = str.lower(table.db)
+            elif table.db == '' and table.name == '':
+                self.table = None
+                self.database = None
         if parse_one(self.query).find(exp.Select):
             self.query_type = 'SELECT'
         elif parse_one(self.query).find(exp.Drop):
