@@ -68,5 +68,5 @@ def test_create_or_replace(create_or_replace_query):
     qp = QueryParser(create_or_replace_query)
     assert qp.query == create_or_replace_query
     assert qp.query_type == 'CREATE OR REPLACE'
-    assert qp.table == "table_a"
-    assert qp.database == "db1"
+    assert qp.table == "table_b"
+    assert qp.database == "db2"

@@ -23,8 +23,12 @@ class QueryParser:
 
         split_query = str.split(self.query)
 
-        if split_query[0].upper() in ['ALTER', 'CREATE']:
-            self.query_type = split_query[0:1].upper()
+        if split_query[0].upper() in ['ALTER']:
+            statement = split_query[0:2]
+            self.query_type = ' '.join(statement).upper()
+        elif split_query[0].upper() in ['CREATE']:
+            statement = split_query[0:3]
+            self.query_type = ' '.join(statement).upper()
         else:
             self.query_type = split_query[0].upper()
 #        if parse_one(self.query).find(exp.Select):
