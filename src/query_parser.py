@@ -48,10 +48,6 @@ class QueryParser:
                 source_string = split_query[1].replace('"', '').replace("'", '')
                 self.source_object = (source_string.split('.'))
 
-        elif split_query[0].upper() in ['REVOKE']:
-            source_string = split_query[4].replace('"', '').replace("'", '')
-            self.source_object = (source_string.split('.'))
-
         elif split_query[0].upper() in ['REMOVE']: 
             source_string = (split_query[1]
                              .replace('"', '')
