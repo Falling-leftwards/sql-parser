@@ -29,7 +29,28 @@ class QueryParser:
 
         if from_position:
             self.logger.debug(f"""source statement:{split_query[from_position + 1]}""")
-            source_string = split_query[from_position + 1].replace('"','')
+            source_string = split_query[from_position + 1].replace('"', '')
             self.logger.debug(f"""source string:{source_string}""")
             self.source_object = (source_string.split('.'))
-            self.logger.debug(f"from table: {self.source_object}")
+            self.logger.debug(f"source object: {self.source_object}")
+
+        elif split_query[0].upper() in ['DROP', 'TRUNCATE']:
+            source_string = split_query[2].replace('"', '').replace("'", '')
+            self.source_object = (source_string.split('.'))
+
+        elif split_query[0].upper() in ['ALTER']:
+            if split_query[1].upper() == 'SESSION':
+                self.source_object = []
+            else:
+                source_string = split_query[2].replace('"', '').replace("'", '')
+                self.source_object = (source_string.split('.'))
+
+        elif split_query[0].upper() in ['REMOVE']: 
+            source_string = (split_query[1]
+                             .replace('"', '')
+                             .replace("'", '')
+                             .replace('@', '')
+                             )
+            self.source_object = (source_string.split('.'))
+
+        self.logger.debug(f"source object: {self.source_object}")
