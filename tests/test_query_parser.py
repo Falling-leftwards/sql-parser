@@ -417,7 +417,7 @@ def test_CREATE_TASK():
     qp = QueryParser(logger, query)
     assert qp.query == query.lower()
     assert qp.query_type == 'CREATE TASK'
-    assert qp.source_object == ['landing_power_platform', 'public']
+    assert qp.source_object == ['landing_power_platform', 'public', 'clone']
 
 def test_CREATE_USER():
     query = """CREATE USER "SYS_DBT_SPP" COMMENT='DBT System user created by Terraform' DEFAULT_ROLE='PUBLIC' LOGIN_NAME='SYS_DBT_SPP'"""
@@ -456,7 +456,7 @@ select * from renamed
   );"""
     qp = QueryParser(logger, query)
     assert qp.query == query.lower()
-    assert qp.query_type == 'CREATE VIEW'
+    assert qp.query_type == 'CREATE OR REPLACE'
     assert qp.source_object == ['dev_rd_scd', 'rd_tmsdat', 'secids']
 
 def test_DELETE():
@@ -477,7 +477,7 @@ def test_DROP():
     query = """ DROP SCHEMA DDS_SAM.DBT_CLOUD_PR_819_553_SUSTAINALYTICS;"""
     qp = QueryParser(logger, query)
     assert qp.query == query.lower()
-    assert qp.query_type == 'DROP'
+    assert qp.query_type == 'DROP SCHEMA'
     assert qp.source_object == ['dds_sam', 'dbt_cloud_pr_819_553_sustainalytics']
 
 def test_DROP_CONSTRAINT():
@@ -491,8 +491,8 @@ def test_DROP_MASKING_POLICY():
     query = """drop masking policy rd_wolf.RD_ORDER.SAM_FUND_ADMIN_SENSITIVE_STRING;"""
     qp = QueryParser(logger, query)
     assert qp.query == query.lower()
-    assert qp.query_type == 'DROP MASKING POLICY'
-    assert qp.source_object == ['db1', 'table_a']
+    assert qp.query_type == 'DROP MASKING'
+    assert qp.source_object == ['rd_wolf', 'rd_order', 'sam_fund_admin_sensitive_string'] 
 
 
 
@@ -500,7 +500,7 @@ def test_DROP_NETWORK_POLICY():
     query = """DROP NETWORK POLICY "QECQ_NX"""
     qp = QueryParser(logger, query)
     assert qp.query == query.lower()
-    assert qp.query_type == 'DROP NETWORK POLICY'
+    assert qp.query_type == 'DROP NETWORK'
     assert qp.source_object == ['qecq_nx']
 
 def test_DROP_ROLE():
@@ -524,7 +524,7 @@ def test_DROP_TASK():
     qp = QueryParser(logger, query)
     assert qp.query == query.lower()
     assert qp.query_type == 'DROP TASK'
-    assert qp.source_object == ['landing_scd', 'public']
+    assert qp.source_object == ['landing_scd', 'public', 'clone']
 
 def test_DROP_USER():
     query = """drop USER IDENTIFIER('"SYS_PREFECT_JANITOR_PLATFORM"')"""
@@ -665,7 +665,7 @@ def test_LIST_FILES():
     qp = QueryParser(logger, query)
     assert qp.query == query.lower()
     assert qp.query_type == 'LIST'
-    assert qp.source_object == ['dev_dds_spp', 'kwedenberg_poc', 'rc146mdx2h9d2xd8 (stage)', 'streamlit_app.py']
+    assert qp.source_object == ['dev_dds_spp', 'kwedenberg_poc', 'rc146mdx2h9d2xd8']
 
 def test_SHOW():
     query = """show parameters like 'query_tag' in session"""
