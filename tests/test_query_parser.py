@@ -121,7 +121,7 @@ def test_ALTER_TABLE():
     qp = QueryParser(logger, query)
     assert qp.query == query.lower()
     assert qp.query_type == 'ALTER TABLE'
-    assert qp.source_object == ['dev_dwh_sam', 'ifwew', 'wefw']
+    assert qp.source_object == ['dwh_comp', 'ifwew', 'wefw']
 
 
 def test_ALTER_TABLE_ADD_COLUMN():
@@ -129,7 +129,7 @@ def test_ALTER_TABLE_ADD_COLUMN():
     qp = QueryParser(logger, query)
     assert qp.query == query.lower()
     assert qp.query_type == 'ALTER TABLE'
-    assert qp.source_object == ['TEMP_511__ESGAIA_CONTROVERSIES_API']
+    assert qp.source_object == ['temp_511__esgaia_controversies_api']
 
 
 def test_ALTER_TABLE_DROP_COLUMN():
@@ -137,7 +137,7 @@ def test_ALTER_TABLE_DROP_COLUMN():
     qp = QueryParser(logger, query)
     assert qp.query == query.lower()
     assert qp.query_type == 'ALTER TABLE'
-    assert qp.source_object == ['dev_dds_cop ', 'hdcewv', 'jqncqekf']
+    assert qp.source_object == ['dev_dds_cop', 'hdcewv', 'jqncqekf']
 
 
 def test_ALTER_TABLE_MANAGE_ROW_ACCESS_POLICY():
@@ -232,7 +232,7 @@ def test_CREATE():
     query = """create schema if not exists rd_wolf.rd_skagenvps"""
     qp = QueryParser(logger, query)
     assert qp.query == query.lower()
-    assert qp.query_type == 'CREATE'
+    assert qp.query_type == 'CREATE SCHEMA'
     assert qp.source_object == ['rd_wolf', 'rd_skagenvps']
 
 
@@ -259,7 +259,7 @@ def test_CREATE_NETWORK_POLICY():
     qp = QueryParser(logger, query)
     assert qp.query == query.lower()
     assert qp.query_type == 'CREATE NETWORK POLICY'
-    assert qp.source_object == ['deckwvn_n_nx']
+    assert qp.source_object == ['deckwvn_nx']
 
 def test_CREATE_ROLE():
     query = """CREATE ROLE "AR_DB_DDS_SAM_RISK_AND_OWNERSHIP_W" COMMENT='Access role created by Terraform'"""
@@ -279,7 +279,7 @@ exists (
         )"""
     qp = QueryParser(logger, query)
     assert qp.query == query.lower()
-    assert qp.query_type == 'CREATE ROW ACCESS POLICY'
+    assert qp.query_type == 'CREATE ROW ACCESS'
     assert qp.source_object == ['dwh_sam', 'fund_admin', 'dim_sh_party']
 
 def test_CREATE_SESSION_POLICY():

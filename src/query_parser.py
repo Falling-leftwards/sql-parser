@@ -17,7 +17,8 @@ class QueryParser:
             statement = split_query[0:2]
             self.query_type = ' '.join(statement).upper().replace(';', '')
         elif split_query[0].upper() in ['CREATE']:
-            if split_query[1].upper() in ['USER', 'ROLE', 'TASK', 'TABLE', 'TAG']:
+            if split_query[1].upper() in ['USER', 'ROLE', 'TASK', 'TABLE',
+                                          'TAG', 'SCHEMA']:
                 statement = split_query[0:2]
             else:
                 statement = split_query[0:3]
@@ -52,7 +53,7 @@ class QueryParser:
             self.source_object = (source_string.split('.'))
 
         if split_query[0].upper() in ['CREATE']:
-            if split_query[2].upper() in ['REPLACE']:
+            if split_query[2].upper() in ['REPLACE', 'ACCESS', ]: 
                 as_position = split_query.index('as')
                 self.logger.debug(f"""as position:{as_position}""")
                 source_string = split_query[as_position - 1].replace('"', '')
@@ -72,18 +73,44 @@ class QueryParser:
                 self.logger.debug(f"""source string:{source_string}""")
                 self.source_object = source_string.split('.')
                 self.logger.debug(f"""source object:{self.source_object}""")
+            elif split_query[1].upper() in ['NETWORK']:
+                if split_query[2].upper() in ['POLICY']:
+                    source_string = (split_query[3]
+                             .replace('"', '')
+                             .replace("'", '')
+                             .replace(';' ,''))
+                    self.logger.debug(f"""source string:{source_string}""")
+                    self.source_object = source_string.split('.')
+                    self.logger.debug(f"""source object:{self.source_object}""")
+
+            elif split_query[1].upper() in ['MASKING']:
+                as_position = split_query.index('as')
+                self.logger.debug(f"""as position:{as_position}""")
+                source_string = split_query[as_position - 1].replace('"', '')
+                self.logger.debug(f"""source string:{source_string}""")
+
+                self.source_object = source_string.split('.')
+                self.logger.debug(f"""source object:{self.source_object}""")
+            else:
+                for segment in split_query:
+                    if segment.find('.') != -1:
+                        self.logger.debug(f"""dot found in {segment}""")
+                        source_string = segment.replace('"', '')
+                        self.logger.debug(f"""source string:{source_string}""")
+                self.source_object = source_string.split('.')
+                self.logger.debug(f"""source object:{self.source_object}""")
 
         if split_query[0].upper() in ['SET']:
             self.source_object = [split_query[1]]
 
         elif split_query[0].upper() in ['TRUNCATE', 'UNDROP', 'MERGE',
-                                        'INSERT']:
+                                        'INSERT', 'COPY']:
             source_string = (split_query[2]
                              .replace('"', '')
                              .replace("'", '')
                              .replace(';' ,'')
                              )
-            self.source_object = (source_string.split('.'))
+            self.source_object = (source_string.split('(')[0].split('.'))
 
         elif split_query[0].upper() in ['DROP','ALTER', 'EXECUTE', 'DESCRIBE']:
             if split_query[1].upper() in ['SESSION']:
@@ -129,14 +156,14 @@ class QueryParser:
                                      )
                 self.source_object = (source_string.split('.'))
 
-        elif split_query[0].upper() in ['REMOVE']: 
+        elif split_query[0].upper() in ['REMOVE', 'CALL']:
             source_string = (split_query[1]
                              .replace('"', '')
                              .replace("'", '')
                              .replace('@', '')
                              .replace(';', '')
                              )
-            self.source_object = (source_string.split('.'))
+            self.source_object = (source_string.split('!')[0].split('.'))
         elif split_query[0].upper() in ['LIST']:
             source_string = (split_query[1]
                              .replace('"', '')
