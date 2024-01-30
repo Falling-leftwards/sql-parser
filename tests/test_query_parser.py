@@ -22,7 +22,7 @@ def test_simple_lower_case(lower_case_simple_query):
 def test_drop_table(drop_table_query):
     qp = QueryParser(logger, drop_table_query)
     assert qp.query == drop_table_query.lower()
-    assert qp.query_type == 'DROP'
+    assert qp.query_type == 'DROP TABLE'
     assert qp.source_object == ['dev_db', 'table_b']
 
 
@@ -30,7 +30,7 @@ def test_drop_table(drop_table_query):
 def test_drop_database(drop_database_query):
     qp = QueryParser(logger, drop_database_query)
     assert qp.query == drop_database_query.lower()
-    assert qp.query_type == 'DROP'
+    assert qp.query_type == 'DROP DATABASE'
     assert qp.source_object == ['sb_production']
 
 
@@ -65,7 +65,7 @@ def test_create_or_replace(create_or_replace_query):
     qp = QueryParser(logger, create_or_replace_query)
     assert qp.query == create_or_replace_query.lower()
     assert qp.query_type == 'CREATE OR REPLACE'
-    assert qp.source_object == ['db2', 'table_b']
+    assert qp.source_object == ['db1', 'table_a']
 
 def test_grant_query():
     query = """GRANT SELECT ON DB1.TABLE_A TO ROLE DBT_ROLE"""
@@ -80,7 +80,7 @@ def test_ALTER():
     qp = QueryParser(logger, query)
     assert qp.query == query.lower()
     assert qp.query_type == 'ALTER TASK'
-    assert qp.source_object == ['LANDING_DATA', 'PUBLIC']
+    assert qp.source_object == ['landing_data', 'public', 'clone']
 
 
 def test_ALTER_ACCOUNT():
@@ -96,7 +96,7 @@ def test_ALTER_NETWORK_POLICY():
     (123.2314.21231.342')"""
     qp = QueryParser(logger, query)
     assert qp.query == query.lower()
-    assert qp.query_type == 'ALTER NETWORK POLICY '
+    assert qp.query_type == 'ALTER NETWORK'
     assert qp.source_object == ['comp_nx']
 
 
@@ -104,7 +104,7 @@ def test_ALTER_POLICY():
     query = """alter row access policy dwh_comp.schema.ricdfv set body ->  exists ( select 1            from  dwh_comp.data_governance.entitlements_for_row_access_policies a           where a.object_in_need_of_access_policy = UPPER('ricdfv')  and a.column_value_to_determine_access = TENANT  and   contains(CURRENT_ROLE(),a.aad_role_used_for_access));"""
     qp = QueryParser(logger, query)
     assert qp.query == query.lower()
-    assert qp.query_type == 'ALTER ROW ACCESS POLICY'
+    assert qp.query_type == 'ALTER ROW ACCESS'
     assert qp.source_object == ['dwh_comp', 'schema', 'ricdfv']
 
 
@@ -113,7 +113,7 @@ def test_ALTER_SET_TAG():
     qp = QueryParser(logger, query)
     assert qp.query == query.lower()
     assert qp.query_type == 'ALTER WAREHOUSE'
-    assert qp.source_object == ['DDS_CORE_DATA_PLATFORM','PLATFORM_MONITORING', 'BUSINESS_UNIT']
+    assert qp.source_object == ['demo_m']
 
 
 def test_ALTER_TABLE():

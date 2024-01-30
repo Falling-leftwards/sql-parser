@@ -12,9 +12,18 @@ class QueryParser:
         split_query = str.split(self.query)
         self.logger.debug(f"split query {split_query}")
 
-        if split_query[0].upper() in ['ALTER', 'TRUNCATE', 'BEGIN', 'EXECUTE',
-                                      'DROP']:
+        if split_query[0].upper() in ['BEGIN']:
             statement = split_query[0:2]
+            self.query_type = ' '.join(statement).upper().replace(';', '')
+
+        elif split_query[0].upper() in ['ALTER', 'TRUNCATE', 'EXECUTE',
+                                      'DROP']:
+            if split_query[1].upper() in ['ROW']:
+                statement = split_query[0:3]
+
+            else:
+                statement = split_query[0:2]
+
             self.query_type = ' '.join(statement).upper().replace(';', '')
         elif split_query[0].upper() in ['CREATE']:
             if split_query[1].upper() in ['USER', 'ROLE', 'TASK', 'TABLE',
@@ -44,14 +53,30 @@ class QueryParser:
             self.logger.debug(f"""on position:{on_position}""")
             if split_query[on_position + 1].upper() in ['FUTURE']:
                 in_position = split_query.index('in')
+                self.logger.debug(f"""in position:{in_position}""")
                 source_string = split_query[in_position + 2]
                 self.logger.debug(f"""source string:{source_string}""")
 
             else:
-                source_string = split_query[on_position + 2].replace('"', '')
-                self.logger.debug(f"""source string:{source_string}""")
-            self.source_object = (source_string.split('.'))
+                first_dot_found = False
+                for segment in split_query:
+                    if (segment.find('.') != -1) & (first_dot_found is False):
+                        first_dot_found = True
+                        self.logger.debug(f"""dot found in {segment}""")
+                        source_string = segment.replace('"', '')
+                        self.logger.debug(f"""source string:{source_string}""")
 
+                    elif (segment.find('_') != -1) & (first_dot_found is False):
+                        first_dot_found = True
+                        self.logger.debug(f"""underscore found in {segment}""")
+                        source_string = segment.replace('"', '')
+                        self.logger.debug(f"""source string:{source_string}""")
+
+            self.source_object = source_string.split('.')
+            self.logger.debug(f"""source object:{self.source_object}""")
+
+
+ 
         if split_query[0].upper() in ['CREATE']:
             if split_query[2].upper() in ['REPLACE', 'ACCESS', ]: 
                 as_position = split_query.index('as')
@@ -138,8 +163,17 @@ class QueryParser:
                                      )
 
                     self.source_object = (source_string.split('.'))
-            elif split_query[1].upper() in ['NETWORK', 'MASKING']:
+            elif split_query[1].upper() in ['NETWORK', 'MASKING', 'ACCOUNT']:
                 source_string = (split_query[3]
+                                     .replace('"', '')
+                                     .replace("'", '')
+                                     .replace('(', '')
+                                     .replace(')', '')
+                                     .replace(';', '')
+                                     )
+                self.source_object = (source_string.split('.'))
+            elif split_query[1].upper() in ['ROW']:
+                source_string = (split_query[4]
                                      .replace('"', '')
                                      .replace("'", '')
                                      .replace('(', '')
