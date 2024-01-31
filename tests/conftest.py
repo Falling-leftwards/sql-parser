@@ -52,5 +52,7 @@ def alter_session_query():
 
 @pytest.fixture
 def create_or_replace_query():
-    query = """CREATE OR REPLACE TABLE "DB1"."TABLE_A" AS SELECT * FROM "DB2"."TABLE_B" """
+    query = (
+        """CREATE OR REPLACE TABLE "DB1"."TABLE_A" AS SELECT * FROM "DB2"."TABLE_B" """
+    )
     return query

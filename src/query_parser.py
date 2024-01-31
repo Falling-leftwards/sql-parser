@@ -1,211 +1,136 @@
 import logging
 
+
+def stringcleanup(string):
+    string = string.replace('"', "")
+    string = string.replace("'", "")
+    string = string.replace(";", "")
+    string = string.replace("(", "")
+    string = string.replace(")", "")
+    string = string.replace("!", "")
+    string = string.replace("@", "")
+    string = string.replace("IDENTIFIER", "")
+    return string
+
+
+def locate_source(split_query, seperator=".", logger=logging.getLogger()):
+    first_dot_found = False
+    string_segment = None
+    for segment in split_query:
+        if (segment.find(seperator) != -1) & (first_dot_found is False):
+            first_dot_found = True
+            logger.debug(f"""dot found in {segment}""")
+            string_segment = stringcleanup(segment)
+    return string_segment
+
+
 class QueryParser:
-    def __init__(self,logger ,query):
+    def __init__(self, logger, query):
         self.logger = logger
-        self.query = query.lower()
+        self.query = query.upper()
         self.query_type = None
         self.source_object = []
+        self.source_string = None
         self._parse()
 
     def _parse(self):
         split_query = str.split(self.query)
         self.logger.debug(f"split query {split_query}")
+        statement = None
 
-        if split_query[0].upper() in ['BEGIN']:
+        # Gather the Query type statement elements
+        if split_query[0] in ["BEGIN"]:
             statement = split_query[0:2]
-            self.query_type = ' '.join(statement).upper().replace(';', '')
 
-        elif split_query[0].upper() in ['ALTER', 'TRUNCATE', 'EXECUTE',
-                                      'DROP']:
-            if split_query[1].upper() in ['ROW']:
+        elif split_query[0] in ["ALTER", "TRUNCATE", "EXECUTE", "DROP"]:
+            if split_query[1] in ["ROW"]:
                 statement = split_query[0:3]
 
             else:
                 statement = split_query[0:2]
 
-            self.query_type = ' '.join(statement).upper().replace(';', '')
-        elif split_query[0].upper() in ['CREATE']:
-            if split_query[1].upper() in ['USER', 'ROLE', 'TASK', 'TABLE',
-                                          'TAG', 'SCHEMA']:
+        elif split_query[0] in ["CREATE"]:
+            if split_query[1] in [
+                "USER",
+                "ROLE",
+                "TASK",
+                "TABLE",
+                "TAG",
+                "SCHEMA",
+            ]:
                 statement = split_query[0:2]
             else:
                 statement = split_query[0:3]
-            self.query_type = ' '.join(statement).upper()
+
+        if statement:
+            self.query_type = stringcleanup(" ".join(statement))
         else:
-            self.query_type = split_query[0].upper()
+            self.query_type = split_query[0]
 
+
+
+        if split_query[0] in ["REVOKE", "GRANT", 'CREATE']:
+            self.source_string =locate_source(split_query, seperator="_") 
+            self.logger.debug(f"""source string:{self.source_string}""")
+
+
+
+        elif split_query[0] in ["SET"]:
+            self.source_string = split_query[1]
+
+        elif split_query[0] in [
+            "TRUNCATE",
+            "UNDROP",
+            "MERGE",
+            "INSERT",
+            "COPY",
+        ]:
+            self.source_string = stringcleanup(split_query[2].split("(")[0])
+
+        elif split_query[0] in ["DROP", "ALTER", "EXECUTE", "DESCRIBE", "LIST"]:
+            if split_query[1] in ["SESSION"]:
+                self.source_object = []
+
+            else:
+                self.source_string = locate_source(split_query, seperator="_")
+
+        elif split_query[0] in ["REMOVE", "CALL"]:
+            self.source_string = stringcleanup(split_query[1].split("!")[0])
+        elif split_query[0] in ["PUT", 'BEGIN', 'GET', ]:
+            self.source_string = []
+
+        '''
+        Attempt to locate source_string based on the location of from statement
+        '''
         try:
-            from_position = split_query.index('from')
+            from_position = split_query.index("FROM")
         except:
             from_position = None
         self.logger.debug(f"""from position:{from_position}""")
 
         if from_position:
-            self.logger.debug(f"""source statement:{split_query[from_position + 1]}""")
-            source_string = split_query[from_position + 1].replace('"', '')
-            self.logger.debug(f"""source string:{source_string}""")
-            self.source_object = (source_string.split('.'))
-            self.logger.debug(f"source object: {self.source_object}")
+            self.source_string = locate_source(split_query)
+            self.logger.debug(f"""source string:{self.source_string}""")
 
-        if split_query[0].upper() in ['REVOKE', 'GRANT']:
-            on_position = split_query.index('on')
-            self.logger.debug(f"""on position:{on_position}""")
-            if split_query[on_position + 1].upper() in ['FUTURE']:
-                in_position = split_query.index('in')
-                self.logger.debug(f"""in position:{in_position}""")
-                source_string = split_query[in_position + 2]
-                self.logger.debug(f"""source string:{source_string}""")
+        '''
+        If source_string not found by now, attempt to find source string
+        based on precence of .
+        '''
 
-            else:
-                first_dot_found = False
-                for segment in split_query:
-                    if (segment.find('.') != -1) & (first_dot_found is False):
-                        first_dot_found = True
-                        self.logger.debug(f"""dot found in {segment}""")
-                        source_string = segment.replace('"', '')
-                        self.logger.debug(f"""source string:{source_string}""")
+        if self.source_string is None:
+            try:
+                self.source_string = locate_source(split_query)
+            except:
+                self.source_string = None
 
-                    elif (segment.find('_') != -1) & (first_dot_found is False):
-                        first_dot_found = True
-                        self.logger.debug(f"""underscore found in {segment}""")
-                        source_string = segment.replace('"', '')
-                        self.logger.debug(f"""source string:{source_string}""")
-
-            self.source_object = source_string.split('.')
-            self.logger.debug(f"""source object:{self.source_object}""")
-
-
- 
-        if split_query[0].upper() in ['CREATE']:
-            if split_query[2].upper() in ['REPLACE', 'ACCESS', ]: 
-                as_position = split_query.index('as')
-                self.logger.debug(f"""as position:{as_position}""")
-                source_string = split_query[as_position - 1].replace('"', '')
-                self.logger.debug(f"""source string:{source_string}""")
-                self.source_object = source_string.split('.')
-            elif split_query[1].upper() in ['USER', 'ROLE']:
-                self.source_object = [split_query[2]
-                             .replace('"', '')
-                             .replace("'", '')
-                             .replace(';' ,'')]
-                self.logger.debug(f"""source object:{self.source_object}""")
-            elif split_query[1].upper() in ['TASK', 'TABLE', 'TAG']:
-                source_string = (split_query[2]
-                             .replace('"', '')
-                             .replace("'", '')
-                             .replace(';' ,''))
-                self.logger.debug(f"""source string:{source_string}""")
-                self.source_object = source_string.split('.')
-                self.logger.debug(f"""source object:{self.source_object}""")
-            elif split_query[1].upper() in ['NETWORK']:
-                if split_query[2].upper() in ['POLICY']:
-                    source_string = (split_query[3]
-                             .replace('"', '')
-                             .replace("'", '')
-                             .replace(';' ,''))
-                    self.logger.debug(f"""source string:{source_string}""")
-                    self.source_object = source_string.split('.')
-                    self.logger.debug(f"""source object:{self.source_object}""")
-
-            elif split_query[1].upper() in ['MASKING']:
-                as_position = split_query.index('as')
-                self.logger.debug(f"""as position:{as_position}""")
-                source_string = split_query[as_position - 1].replace('"', '')
-                self.logger.debug(f"""source string:{source_string}""")
-
-                self.source_object = source_string.split('.')
-                self.logger.debug(f"""source object:{self.source_object}""")
-            else:
-                for segment in split_query:
-                    if segment.find('.') != -1:
-                        self.logger.debug(f"""dot found in {segment}""")
-                        source_string = segment.replace('"', '')
-                        self.logger.debug(f"""source string:{source_string}""")
-                self.source_object = source_string.split('.')
-                self.logger.debug(f"""source object:{self.source_object}""")
-
-        if split_query[0].upper() in ['SET']:
-            self.source_object = [split_query[1]]
-
-        elif split_query[0].upper() in ['TRUNCATE', 'UNDROP', 'MERGE',
-                                        'INSERT', 'COPY']:
-            source_string = (split_query[2]
-                             .replace('"', '')
-                             .replace("'", '')
-                             .replace(';' ,'')
-                             )
-            self.source_object = (source_string.split('(')[0].split('.'))
-
-        elif split_query[0].upper() in ['DROP','ALTER', 'EXECUTE', 'DESCRIBE']:
-            if split_query[1].upper() in ['SESSION']:
+        '''Transfer the identified source string to source object for return'''
+        try:
+            self.source_object = self.source_string.lower().split('.')
+        except:
+            if self.source_string is None:
                 self.source_object = []
-            elif split_query[1].upper() in ['TABLE', 'VIEW', 'SCHEMA','USER',
-                                            'TASK']:
-                if split_query[2].find('identifier') != 1:
-                    self.logger.debug(f'identifier found in {split_query[2]}')
-                    source_string = (split_query[2]
-                                     .replace('identifier', '')
-                                     .replace('(', '')
-                                     .replace(')', '')
-                                     .replace('"', '')
-                                     .replace("'", '')
-                                     .replace(';', '')
-                                    )
-                    self.logger.debug(f"""source string:{source_string}""")
-                    self.source_object = (source_string.split('.'))
-                else:
-                    source_string = (split_query[2]
-                                     .replace('"', '')
-                                     .replace("'", '')
-                                     .replace('(', '')
-                                     .replace(')', '')
-                                     )
-
-                    self.source_object = (source_string.split('.'))
-            elif split_query[1].upper() in ['NETWORK', 'MASKING', 'ACCOUNT']:
-                source_string = (split_query[3]
-                                     .replace('"', '')
-                                     .replace("'", '')
-                                     .replace('(', '')
-                                     .replace(')', '')
-                                     .replace(';', '')
-                                     )
-                self.source_object = (source_string.split('.'))
-            elif split_query[1].upper() in ['ROW']:
-                source_string = (split_query[4]
-                                     .replace('"', '')
-                                     .replace("'", '')
-                                     .replace('(', '')
-                                     .replace(')', '')
-                                     .replace(';', '')
-                                     )
-                self.source_object = (source_string.split('.'))
+            elif self.source_string == []:
+                self.source_object = []
             else:
-                source_string = (split_query[2]
-                                     .replace('"', '')
-                                     .replace("'", '')
-                                     .replace('(', '')
-                                     .replace(')', '')
-                                     )
-                self.source_object = (source_string.split('.'))
-
-        elif split_query[0].upper() in ['REMOVE', 'CALL']:
-            source_string = (split_query[1]
-                             .replace('"', '')
-                             .replace("'", '')
-                             .replace('@', '')
-                             .replace(';', '')
-                             )
-            self.source_object = (source_string.split('!')[0].split('.'))
-        elif split_query[0].upper() in ['LIST']:
-            source_string = (split_query[1]
-                             .replace('"', '')
-                             .replace("'", '')
-                             .replace('@', '')
-                             .replace(';', '')
-                             )
-            self.source_object = (source_string.split('.'))
-
-        
+                self.source_object = [self.source_string.lower()]
         self.logger.debug(f"source object: {self.source_object}")
