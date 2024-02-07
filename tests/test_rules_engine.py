@@ -1,7 +1,6 @@
 """Tests for the rules engine."""
 import logging
 
-import pytest
 
 from src.RulesEngine import RulesEngine
 

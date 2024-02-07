@@ -1,7 +1,6 @@
 """Tests for the query_parser module."""
 from src.query_parser import QueryParser
 import logging
-import pytest
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
