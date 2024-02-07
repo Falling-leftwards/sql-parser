@@ -1,7 +1,12 @@
+"""Module containing the query parser class."""
 import logging
 
 
 def stringcleanup(string):
+    """Remove unwanted characters from a string.
+
+    character selection ois based on characters found in acutal queries.
+    """
     string = string.replace('"', "")
     string = string.replace("'", "")
     string = string.replace(";", "")
@@ -14,6 +19,13 @@ def stringcleanup(string):
 
 
 def locate_source(split_query, seperator=".", logger=logging.getLogger()):
+    """locate the source object in a query.
+
+    It does this by looking for the first occurance of a seperator in the query
+    Source object is then cleaned up and returned.
+
+    In this case a source object is the instance on which the query is executed
+    """
     first_dot_found = False
     string_segment = None
     for segment in split_query:
@@ -25,7 +37,16 @@ def locate_source(split_query, seperator=".", logger=logging.getLogger()):
 
 
 class QueryParser:
+    """Parse a query and extract the query type and object.
+
+    This is a custom parser and is not guaranteed to work for all queries.
+    The snowflake query history table is used as the source of queries.
+    It contains aproximatly 60 typed of queries.
+    this parser attempts to generalise as far as possible.
+    """
+
     def __init__(self, logger, query):
+        """Initiate the query parser."""
         self.logger = logger
         self.query = query.upper()
         self.query_type = None
@@ -34,7 +55,16 @@ class QueryParser:
         self._parse()
 
     def _parse(self):
-        split_query = str.split(self.query)
+        """Parse the query and extract the query type and source object.
+
+        It is the main function of the class.
+        and is called by the __init__ function.
+        it is not intended to be called directly.
+        """
+        try:
+            split_query = str.split(self.query)
+        except:
+            solit_query = [self.query]
         self.logger.debug(f"split query {split_query}")
         statement = None
 
@@ -67,13 +97,9 @@ class QueryParser:
         else:
             self.query_type = split_query[0]
 
-
-
-        if split_query[0] in ["REVOKE", "GRANT", 'CREATE']:
-            self.source_string =locate_source(split_query, seperator="_") 
+        if split_query[0] in ["REVOKE", "GRANT", "CREATE"]:
+            self.source_string = locate_source(split_query, seperator="_")
             self.logger.debug(f"""source string:{self.source_string}""")
-
-
 
         elif split_query[0] in ["SET"]:
             self.source_string = split_query[1]
@@ -87,21 +113,26 @@ class QueryParser:
         ]:
             self.source_string = stringcleanup(split_query[2].split("(")[0])
 
-        elif split_query[0] in ["DROP", "ALTER", "EXECUTE", "DESCRIBE", "LIST"]:
+        elif split_query[0] in [
+            "DROP",
+            "ALTER",
+            "EXECUTE",
+            "DESCRIBE",
+            "LIST",
+            "DELETE",
+        ]:
             if split_query[1] in ["SESSION"]:
-                self.source_object = []
+                self.source_object = ["UNPARCEBLE"]
 
             else:
                 self.source_string = locate_source(split_query, seperator="_")
 
         elif split_query[0] in ["REMOVE", "CALL"]:
             self.source_string = stringcleanup(split_query[1].split("!")[0])
-        elif split_query[0] in ["PUT", 'BEGIN', 'GET', ]:
-            self.source_string = []
+        elif split_query[0] in ["PUT", "BEGIN", "GET", "ROLLBACK", "COMMIT"]:
+            self.source_string = "UNPARCEBLE"
 
-        '''
-        Attempt to locate source_string based on the location of from statement
-        '''
+        """Attempt to locate source_string based on the location of from statement"""
         try:
             from_position = split_query.index("FROM")
         except:
@@ -111,11 +142,13 @@ class QueryParser:
         if from_position:
             self.source_string = locate_source(split_query)
             self.logger.debug(f"""source string:{self.source_string}""")
+            if self.source_string is None:
+                self.source_string = locate_source(split_query, seperator="_")
+                self.logger.debug(f"""source string:{self.source_string}""")
 
-        '''
-        If source_string not found by now, attempt to find source string
-        based on precence of .
-        '''
+        """If source_string not found by now, attempt to find source string
+        based on precence of.
+        """
 
         if self.source_string is None:
             try:
@@ -123,14 +156,18 @@ class QueryParser:
             except:
                 self.source_string = None
 
-        '''Transfer the identified source string to source object for return'''
+        """Transfer the identified source string to source object for return"""
         try:
-            self.source_object = self.source_string.lower().split('.')
+            self.source_object = self.source_string.lower().split(".")
         except:
             if self.source_string is None:
-                self.source_object = []
+                self.source_object = ["Not identified"]
             elif self.source_string == []:
                 self.source_object = []
             else:
                 self.source_object = [self.source_string.lower()]
         self.logger.debug(f"source object: {self.source_object}")
+
+    def get_query_object(self):
+        """Return the source object as a list."""
+        return list(self.source_object)

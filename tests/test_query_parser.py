@@ -1,3 +1,4 @@
+"""Tests for the query_parser module."""
 from src.query_parser import QueryParser
 import logging
 import pytest
@@ -6,32 +7,43 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
-def test_query_parser_simple(simple_query):
-    qp = QueryParser(logger, simple_query)
+def test_query_parser_simple():
+    """Test a simple query."""
+    query = """SELECT column_A FROM DB1.TABLE_A"""
+    qp = QueryParser(logger, query)
     assert qp.query_type == "SELECT"
     assert qp.source_object == ["db1", "table_a"]
 
 
-def test_simple_lower_case(lower_case_simple_query):
-    qp = QueryParser(logger, lower_case_simple_query)
+def test_simple_lower_case():
+    """Test that Queryparser is case insensitive."""
+    query = """select column_A from db1.table_A"""
+    qp = QueryParser(logger, query)
     assert qp.query_type == "SELECT"
     assert qp.source_object == ["db1", "table_a"]
 
 
-def test_drop_table(drop_table_query):
-    qp = QueryParser(logger, drop_table_query)
+def test_drop_table():
+    """Test to parse a DROP TABLE query."""
+    query = """DROP TABLE DEV_DB.TABLE_B"""
+    qp = QueryParser(logger, query)
     assert qp.query_type == "DROP TABLE"
     assert qp.source_object == ["dev_db", "table_b"]
 
 
-def test_drop_database(drop_database_query):
-    qp = QueryParser(logger, drop_database_query)
+def test_drop_database():
+    """Test to parse a DROP DATABASE query."""
+    query = """DROP DATABASE SB_PRODUCTION"""
+    qp = QueryParser(logger, query)
     assert qp.query_type == "DROP DATABASE"
     assert qp.source_object == ["sb_production"]
 
 
-def test_remove(Remove_query):
-    qp = QueryParser(logger, Remove_query)
+def test_remove():
+    """Test to parse a REMOVE query."""
+    query = """REMOVE
+    @'LANDING_DATA'.'PUBLIC'.'ATTREP_IS_LANDING_DATA_6af21a79_b97f_7c4f_8513_967ff6a786ce'/6af21a79_b97f_7c4f_8513_967ff6a786ce/0/CDC00001296.csv'"""
+    qp = QueryParser(logger, query)
     assert qp.query_type == "REMOVE"
     assert qp.source_object == [
         "landing_data",
@@ -41,31 +53,44 @@ def test_remove(Remove_query):
     ]
 
 
-def test_redacted(redacted_query):
-    qp = QueryParser(logger, redacted_query)
+def test_redacted():
+    """Test to parse a redacted query.
+
+    Snowflake redacts some queries, so we need to handle them.
+    """
+    query = """<redacted>"""
+    qp = QueryParser(logger, query)
     assert qp.query_type == "<REDACTED>"
-    assert qp.source_object == []
+    assert qp.source_object == ['Not identified']
 
 
-def test_truncate(truncate_query):
-    qp = QueryParser(logger, truncate_query)
+def test_truncate():
+    """Test to parse a TRUNCATE TABLE query."""
+    query = """TRUNCATE TABLE 'DATA_LOADER_STATUS'.'attrep_changesD8492F6541312D7'"""
+    qp = QueryParser(logger, query )
     assert qp.query_type == "TRUNCATE TABLE"
     assert qp.source_object == ["data_loader_status", "attrep_changesd8492f6541312d7"]
 
 
-def test_alter_session(alter_session_query):
-    qp = QueryParser(logger, alter_session_query)
+def test_alter_session():
+    """Test to parse an ALTER SESSION query."""
+    query = """ALTER SESSION SET JDBC_QUERY_RESULT_FORMAT='JSON'"""
+    qp = QueryParser(logger, query )
     assert qp.query_type == "ALTER SESSION"
-    assert qp.source_object == []
+    assert qp.source_object == ['Not identified']
 
 
-def test_create_or_replace(create_or_replace_query):
-    qp = QueryParser(logger, create_or_replace_query)
+
+def test_create_or_replace():
+    """Test to parse a CREATE OR REPLACE TABLE query."""
+    query = """CREATE OR REPLACE TABLE "DB1"."TABLE_A" AS SELECT * FROM "DB2"."TABLE_B" """
+    qp = QueryParser(logger, query)
     assert qp.query_type == "CREATE OR REPLACE"
     assert qp.source_object == ["db1", "table_a"]
 
 
 def test_grant_query():
+    """Test to parse a GRANT query."""
     query = """GRANT SELECT ON DB1.TABLE_A TO ROLE DBT_ROLE"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "GRANT"
@@ -73,6 +98,7 @@ def test_grant_query():
 
 
 def test_ALTER():
+    """Test to parse an ALTER task query."""
     query = """ALTER TASK "LANDING_DATA"."PUBLIC"."Clone from prod" SUSPEND"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "ALTER TASK"
@@ -80,6 +106,7 @@ def test_ALTER():
 
 
 def test_ALTER_ACCOUNT():
+    """Test to parse an ALTER ACCOUNT query."""
     query = """alter ACCOUNT set NETWORK_POLICY = 'MELTANO_NX'"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "ALTER ACCOUNT"
@@ -87,6 +114,7 @@ def test_ALTER_ACCOUNT():
 
 
 def test_ALTER_NETWORK_POLICY():
+    """Test to parse an ALTER NETWORK POLICY query."""
     query = """ALTER NETWORK POLICY COMP_NX SET ALLOWED_IP_LIST =
     (123.2314.21231.342')"""
     qp = QueryParser(logger, query)
@@ -95,6 +123,7 @@ def test_ALTER_NETWORK_POLICY():
 
 
 def test_ALTER_POLICY():
+    """Test to parse an ALTER POLICY query."""
     query = """alter row access policy dwh_comp.schema.ricdfv set body ->  exists ( select 1            from  dwh_comp.data_governance.entitlements_for_row_access_policies a           where a.object_in_need_of_access_policy = UPPER('ricdfv')  and a.column_value_to_determine_access = TENANT  and   contains(CURRENT_ROLE(),a.aad_role_used_for_access));"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "ALTER ROW ACCESS"
@@ -102,6 +131,7 @@ def test_ALTER_POLICY():
 
 
 def test_ALTER_SET_TAG():
+    """Test to parse an ALTER SET TAG query."""
     query = """ALTER WAREHOUSE "DEMO_M" SET TAG "DDS_CORE_DATA_PLATFORM"."PLATFORM_MONITORING"."BUSINESS_UNIT" = 'CORE'"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "ALTER WAREHOUSE"
@@ -109,6 +139,7 @@ def test_ALTER_SET_TAG():
 
 
 def test_ALTER_TABLE():
+    """Test to parse an ALTER TABLE query."""
     query = """alter table dwh_comp.ifwew.wefw cluster by (s_dk_date_no);"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "ALTER TABLE"
@@ -116,6 +147,7 @@ def test_ALTER_TABLE():
 
 
 def test_ALTER_TABLE_ADD_COLUMN():
+    """Test to parse an ALTER TABLE query with quotation marks."""
     query = """ALTER TABLE "TEMP_511__ESGAIA_CONTROVERSIES_API" ADD COLUMN "__HEVO__CONSUMPTION_ID" BIGINT DEFAULT 0"""
     qp = QueryParser(logger, query)
     assert qp.query == query.upper()
@@ -124,6 +156,7 @@ def test_ALTER_TABLE_ADD_COLUMN():
 
 
 def test_ALTER_TABLE_DROP_COLUMN():
+    """Test to parse an ALTER TABLE query with quotation marks."""
     query = """ALTER TABLE DEV_DDS_COP.HDCEWV.JQNCQEKF DROP column EXTRACTED_DATE_PERIOD_S ;"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "ALTER TABLE"
@@ -131,6 +164,7 @@ def test_ALTER_TABLE_DROP_COLUMN():
 
 
 def test_ALTER_TABLE_MANAGE_ROW_ACCESS_POLICY():
+    """Test to parse an ALTER view query."""
     query = """alter view dwh_ceewf.dsvrv.brg_sh_party_tax_countrsaevy add row access policy rffr.vfffffffffff.vdfvrv on (TENANT)"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "ALTER VIEW"
@@ -138,6 +172,7 @@ def test_ALTER_TABLE_MANAGE_ROW_ACCESS_POLICY():
 
 
 def test_ALTER_TABLE_MODIFY_COLUMN():
+    """Test to parse an ALTER TABLE, with modify query."""
     query = (
         """ALTER TABLE DWH_SFVR.VREQR.VEQDR MODIFY column AUM_GROUP_TYPE TEXT(100) ;"""
     )
@@ -147,6 +182,7 @@ def test_ALTER_TABLE_MODIFY_COLUMN():
 
 
 def test_ALTER_TAG_UNSET_ALLOWED_VALUES():
+    """Test to parse an ALTER TAG query."""
     query = """ALTER TAG "DDS_CORE_DATA_PLATFORM"."PLATFORM_MONITORING"."BUSINESS_UNIT" UNSET ALLOWED_VALUES"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "ALTER TAG"
@@ -158,6 +194,7 @@ def test_ALTER_TAG_UNSET_ALLOWED_VALUES():
 
 
 def test_ALTER_UNSET_TAG():
+    """Test to parse an ALTER database tag query."""
     query = """ALTER DATABASE "DEV_LANDING_BOOST_AI" UNSET TAG "DDS_CORE_DATA_PLATFORM"."PLATFORM_MONITORING"."BUSINESS_UNIT"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "ALTER DATABASE"
@@ -165,6 +202,7 @@ def test_ALTER_UNSET_TAG():
 
 
 def test_ALTER_USER():
+    """Test to parse an ALTER USER query."""
     query = """ALTER USER sys_voqvnc_wefg SET DISABLED = FALSE"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "ALTER USER"
@@ -172,6 +210,7 @@ def test_ALTER_USER():
 
 
 def test_ALTER_VIEW_MODIFY_COLUMN_MANAGE_POLICY():
+    """Test to parse an ALTER VIEW query."""
     query = """alter view  dev_rd_wolf.rd_skagenvps.vps_account__hist modify column  date_of_birth set masking policy dev_rd_wolf.rd_skagenvps.sam_fund_admin_sensitive_date;"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "ALTER VIEW"
@@ -179,6 +218,7 @@ def test_ALTER_VIEW_MODIFY_COLUMN_MANAGE_POLICY():
 
 
 def test_ALTER_WAREHOUSE_RESUME():
+    """Test to parse an ALTER WAREHOUSE query."""
     query = """ALTER WAREHOUSE "ANALYSIS_SAM_WH" RESUME;"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "ALTER WAREHOUSE"
@@ -186,6 +226,7 @@ def test_ALTER_WAREHOUSE_RESUME():
 
 
 def test_ALTER_WAREHOUSE_SUSPEND():
+    """Test to parse an ALTER WAREHOUSE query."""
     query = """alter warehouse exporting_enterprise_xs suspend;"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "ALTER WAREHOUSE"
@@ -193,13 +234,14 @@ def test_ALTER_WAREHOUSE_SUSPEND():
 
 
 def test_BEGIN_TRANSACTION():
+    """Test to parse a BEGIN TRANSACTION query."""
     query = """BEGIN"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "BEGIN"
-    assert qp.source_object == []
-
+    assert qp.source_object == ['unparceble']
 
 def test_CALL():
+    """Test to parse a CALL query."""
     query = """CALL "SNOWFLAKE"."LOCAL"."ACCOUNT_ROOT_BUDGET"!GET_SPENDING_LIMIT();"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "CALL"
@@ -207,13 +249,15 @@ def test_CALL():
 
 
 def test_COMMIT():
+    """Test to parse a COMMIT query."""
     query = """commit"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "COMMIT"
-    assert qp.source_object == []
+    assert qp.source_object == ['unparceble']
 
 
 def test_COPY():
+    """Test to parse a COPY query."""
     query = """COPY INTO "DATA_LOADER_STATUS"."attrep_changes248AD1592B3410B8"("seq"FROM '@"LANDING_SCD"."PUBLIC"."ATTREP_IS_LANDING_SCD_77047228_e4b5_ba45_9f3e_900c13ca4eb5"/77047228_e4b5_ba45_9f3e_900c13ca4eb5/0/') files = ('CDC00000FEE.csv.gz') force=true"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "COPY"
@@ -221,6 +265,7 @@ def test_COPY():
 
 
 def test_CREATE():
+    """Test to parse a CREATE query."""
     query = """create schema if not exists rd_wolf.rd_skagenvps"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "CREATE SCHEMA"
@@ -228,6 +273,7 @@ def test_CREATE():
 
 
 def test_CREATE_CONSTRAINT():
+    """Test to parse a CREATE CONSTRAINT query."""
     query = """ALTER TABLE "DATA_LOADER_STATUS"."attrep_changes59CD484EC631CA9C" ADD CONSTRAINT "attrep_changes59CD484EC631CA9C_C631CA9C_PK" PRIMARY KEY ( "seq" )"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "ALTER TABLE"
@@ -235,6 +281,7 @@ def test_CREATE_CONSTRAINT():
 
 
 def test_CREATE_MASKING_POLICY():
+    """Test to parse a CREATE MASKING POLICY query."""
     query = """CREATE MASKING POLICY IF NOT EXISTS rd_wolf.rd_k3s_prod.sam_fund_admin_sensitive_number AS (val number) 
   RETURNS number ->
       CASE WHEN CURRENT_ROLE() IN ('DATA_ENGINEER_PLATFORM', 'DATA_ENGINEER_SAM', 'REPORTER_SAM_FUND_ADMIN', 'DATA_ANALYST_SAM_FUND_ADMINISTRATION_NO', 'DATA_ANALYST_SAM_FUND_ADMINISTRATION_SE', 'DATA_ENGINEER_GRC' ,'TRANSFORMER_PLATFORM', 'TRANSFORMER_SAM') THEN val 
@@ -250,6 +297,7 @@ def test_CREATE_MASKING_POLICY():
 
 
 def test_CREATE_NETWORK_POLICY():
+    """Test to parse a CREATE NETWORK POLICY query."""
     query = """CREATE NETWORK POLICY "deckwvN_NX" ALLOWED_IP_LIST=('234.541324.13245.314') COMMENT="A Networkpolicy for Snowflake created by Terrafrom."""
     qp = QueryParser(logger, query)
     assert qp.query_type == "CREATE NETWORK POLICY"
@@ -257,6 +305,7 @@ def test_CREATE_NETWORK_POLICY():
 
 
 def test_CREATE_ROLE():
+    """Test to parse a CREATE ROLE query."""
     query = """CREATE ROLE "AR_DB_DDS_SAM_RISK_AND_OWNERSHIP_W" COMMENT='Access role created by Terraform'"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "CREATE ROLE"
@@ -264,6 +313,7 @@ def test_CREATE_ROLE():
 
 
 def test_CREATE_ROW_ACCESS_POLICY():
+    """Test to parse a CREATE ROW ACCESS POLICY query."""
     query = """create row access policy if not exists dwh_sam.fund_admin.dim_sh_party as (tenant varchar) returns boolean ->
 exists (
           select 1 
@@ -278,6 +328,7 @@ exists (
 
 
 def test_CREATE_SESSION_POLICY():
+    """Test to parse a CREATE SESSION POLICY query."""
     query = (
         """CREATE TAG "DDS_CORE_DATA_PLATFORM"."PLATFORM_MONITORING"."BUSINESS_UNIT"""
     )
@@ -291,6 +342,7 @@ def test_CREATE_SESSION_POLICY():
 
 
 def test_CREATE_TABLE():
+    """Test to parse a CREATE TABLE query."""
     query = """create table dds_sam.dbt_cloud_pr_819_1104_intermediate.sust_field_type_correction (fieldid INTEGER,fieldtype VARCHAR(50))"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "CREATE TABLE"
@@ -302,6 +354,7 @@ def test_CREATE_TABLE():
 
 
 def CREATE_TABLE_AS_SELECT():
+    """Test to parse a CREATE TABLE AS Based on DBT SELECT query."""
     query = """create or replace temporary table "RD_SCD"."SNAPSHOTS"."SCD_TMSDAT__BUSINESSCLASSLEVEL1__SNAPSHOT__dbt_tmp"
          as
         (with snapshot_query as() 
@@ -422,6 +475,7 @@ FROM landing_scd.TMSDAT.businessclasslevel1
 
 
 def test_CREATE_TASK():
+    """Test to parse a CREATE TASK query."""
     query = """CREATE TASK "LANDING_POWER_PLATFORM"."PUBLIC"."Clone POWER_PLATFORM from prod" WAREHOUSE = "LOADING_SAM_WH" SCHEDULE = '10080 MINUTE' COMMENT = 'This task clones the data from prod to dev, database for dev process.' AS create or replace database DEV_LANDING_POWER_PLATFORM clone LANDING_POWER_PLATFORM"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "CREATE TASK"
@@ -429,6 +483,7 @@ def test_CREATE_TASK():
 
 
 def test_CREATE_USER():
+    """Test to parse a CREATE USER query."""
     query = """CREATE USER "SYS_DBT_SPP" COMMENT='DBT System user created by Terraform' DEFAULT_ROLE='PUBLIC' LOGIN_NAME='SYS_DBT_SPP'"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "CREATE USER"
@@ -436,6 +491,7 @@ def test_CREATE_USER():
 
 
 def test_CREATE_VIEW():
+    """Test to parse a CREATE VIEW query."""
     query = """create or replace   view dev_rd_scd.rd_tmsdat.secids
   
    as (
@@ -469,6 +525,7 @@ select * from renamed
 
 
 def test_DELETE():
+    """Test to parse a DELETE query."""
     query = """DELETE  FROM "TMSDAT"."TRANSGAINLOSS" USING """
     qp = QueryParser(logger, query)
     assert qp.query_type == "DELETE"
@@ -476,6 +533,7 @@ def test_DELETE():
 
 
 def test_DESCRIBE():
+    """Test to parse a DESCRIBE query."""
     query = """describe table landing_trucost.trucost.sfdr_corporate_cpucu"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "DESCRIBE"
@@ -483,6 +541,7 @@ def test_DESCRIBE():
 
 
 def test_DROP():
+    """Test to parse a DROP query."""
     query = """ DROP SCHEMA DDS_SAM.DBT_CLOUD_PR_819_553_SUSTAINALYTICS;"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "DROP SCHEMA"
@@ -490,6 +549,7 @@ def test_DROP():
 
 
 def test_DROP_CONSTRAINT():
+    """Test to parse a DROP CONSTRAINT query."""
     query = """alter table SUSTAINALYTICS."ESG_SUST_PI_H" drop primary key;"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "ALTER TABLE"
@@ -497,6 +557,7 @@ def test_DROP_CONSTRAINT():
 
 
 def test_DROP_MASKING_POLICY():
+    """Test to parse a DROP MASKING POLICY query."""
     query = """drop masking policy rd_wolf.RD_ORDER.SAM_FUND_ADMIN_SENSITIVE_STRING;"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "DROP MASKING"
@@ -508,6 +569,7 @@ def test_DROP_MASKING_POLICY():
 
 
 def test_DROP_NETWORK_POLICY():
+    """Test to parse a DROP NETWORK POLICY query."""
     query = """DROP NETWORK POLICY "QECQ_NX"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "DROP NETWORK"
@@ -515,21 +577,15 @@ def test_DROP_NETWORK_POLICY():
 
 
 def test_DROP_ROLE():
+    """Test to parse a DROP ROLE query."""
     query = """DROP ROLE "AR_DB_DDS_ANALYTICS_R"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "DROP ROLE"
     assert qp.source_object == ["ar_db_dds_analytics_r"]
 
 
-@pytest.mark.skip(reason="Not implemented yet")
-def test_DROP_ROW_ACCESS_POLICY():
-    query = """ """
-    qp = QueryParser(logger, query)
-    assert qp.query_type == "GRANT"
-    assert qp.source_object == ["db1", "table_a"]
-
-
 def test_DROP_TASK():
+    """Test to parse a DROP TASK query."""
     query = """DROP TASK "LANDING_SCD"."PUBLIC"."Clone from prod"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "DROP TASK"
@@ -537,6 +593,7 @@ def test_DROP_TASK():
 
 
 def test_DROP_USER():
+    """Test to parse a DROP USER query."""
     query = """drop USER IDENTIFIER('"SYS_PREFECT_JANITOR_PLATFORM"')"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "DROP USER"
@@ -544,6 +601,7 @@ def test_DROP_USER():
 
 
 def test_EXECUTE_STREAMLIT():
+    """Test to parse a EXECUTE STREAMLIT query."""
     query = """execute streamlit "DEV_DDS_SAM"."KU0_SCRATCHPADS"."G8G527BNVK_NJEM3"()"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "EXECUTE STREAMLIT"
@@ -551,13 +609,15 @@ def test_EXECUTE_STREAMLIT():
 
 
 def test_GET_FILES():
+    """Test to parse a GET FILES query."""
     query = """GET '@worksheets_app.public.blobs/projects/783127510512160772/888184962c7c4a5f6cb7b1c3b433659d' 'file:///'"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "GET"
-    assert qp.source_object == []
+    assert qp.source_object == ['unparceble']
 
 
 def test_GRANT():
+    """Test to parse a GRANT query."""
     query = """GRANT select, insert, update, delete, truncate, references ON FUTURE views IN database dev_rd_nordic_trustee TO ROLE dev_ar_db_rd_nordic_trustee_w"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "GRANT"
@@ -565,6 +625,7 @@ def test_GRANT():
 
 
 def test_INSERT():
+    """Test to parse an INSERT query."""
     query = """INSERT INTO "DATA_LOADER_STATUS"."attrep_history" ( "server_name","task_name","timeslot_type","timeslot","timeslot_duration","timeslot_latency","timeslot_records","timeslot_volume" )  SELECT 'p-dp-qlik1.common.storebrand.no','_Wolf_cashledger_to_DAMP','CHANGE PROCESSING','2023-12-27 22:56:17',30,1,0,0"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "INSERT"
@@ -572,6 +633,7 @@ def test_INSERT():
 
 
 def test_LIST_FILES():
+    """Test to parse a LIST FILES query."""
     query = """list '@DEV_DDS_SPP.KWEDENBERG_POC."RC146MDX2H9D2XD8 (Stage)"/streamlit_app.py';"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "LIST"
@@ -584,6 +646,7 @@ def test_LIST_FILES():
 
 
 def test_MERGE():
+    """Test to parse a MERGE query."""
     query = """MERGE INTO "TMSDAT"."FXFORWARDS" T USING """
     qp = QueryParser(logger, query)
     assert qp.query_type == "MERGE"
@@ -591,6 +654,7 @@ def test_MERGE():
 
 
 def test_MULTI_STATEMENT():
+    """Test to parse a MULTI STATEMENT query."""
     query = """BEGIN TRANSACTION;
 DROP TABLE IF EXISTS "SCREENER"."SCREENER LIST";
 ALTER TABLE "SCREENER"."SCREENER LIST_AIRBYTE_TMP" RENAME TO "SCREENER"."SCREENER LIST";
@@ -598,17 +662,19 @@ COMMIT;
 """
     qp = QueryParser(logger, query)
     assert qp.query_type == "BEGIN TRANSACTION"
-    assert qp.source_object == []
+    assert qp.source_object == ['unparceble']
 
 
 def test_PUT_FILES():
+    """Test to parse a PUT FILES query."""
     query = """PUT 'file:///11305ce8e2b425d90e1c61424eaf4a5f' '@worksheets_app.public.blobs/projects/1109056001759335584'"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "PUT"
-    assert qp.source_object == []
+    assert qp.source_object == ['unparceble']
 
 
 def test_REMOVE_FILES():
+    """Test to parse a REMOVE FILES query."""
     query = """REMOVE @"LANDING_WOLF"."PUBLIC"."ATTREP_IS_LANDING_WOLF_e1d8c1b1_0b28_264d_a1b4_53dc7af8d4e6"/e1d8c1b1_0b28_264d_a1b4_53dc7af8d4e6/0/CDC00000229.csv;"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "REMOVE"
@@ -621,6 +687,7 @@ def test_REMOVE_FILES():
 
 
 def test_RENAME_COLUMN():
+    """Test to parse a RENAME COLUMN query."""
     query = """ALTER TABLE HOLDINGS_PFC_EOD RENAME COLUMN LASTEXETS_TMP TO LASTEXETS"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "ALTER TABLE"
@@ -628,6 +695,7 @@ def test_RENAME_COLUMN():
 
 
 def test_RENAME_SCHEMA():
+    """Test to parse a RENAME SCHEMA query."""
     query = """alter SCHEMA IDENTIFIER('"SB_SAM_RISK_AND_OWNERSHIP"."FL_TEST"') rename to IDENTIFIER('"SB_SAM_RISK_AND_OWNERSHIP"."LEGACY_FL_TEST"')"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "ALTER SCHEMA"
@@ -635,6 +703,7 @@ def test_RENAME_SCHEMA():
 
 
 def test_RENAME_TABLE():
+    """Test to parse a RENAME TABLE query."""
     query = """ALTER TABLE esg_scores RENAME TO esg_scores_v1;"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "ALTER TABLE"
@@ -642,6 +711,7 @@ def test_RENAME_TABLE():
 
 
 def test_RENAME_VIEW():
+    """Test to parse a RENAME VIEW query."""
     query = """alter VIEW IDENTIFIER('"SB_SAM_RISK_AND_OWNERSHIP"."FL_TEST"."OILGAS_SUS_L"') rename to IDENTIFIER('"SB_SAM_RISK_AND_OWNERSHIP"."FL_TEST"."OILGAS_SUS"')"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "ALTER VIEW"
@@ -649,6 +719,7 @@ def test_RENAME_VIEW():
 
 
 def test_RESTORE():
+    """Test to parse a RESTORE query."""
     query = """UNDROP TABLE INTERNAL_EXPORT_SAM.IE_ADS_STAGING.IE_ADS_ESG_PORTFOLIO_KPIS__SNAPSHOT_NEW_HW;"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "UNDROP"
@@ -660,6 +731,7 @@ def test_RESTORE():
 
 
 def test_REVOKE():
+    """Test to parse a REVOKE query."""
     query = """REVOKE select ON table dev_landing_scd.tmsdat.pmgfreecodes4 FROM ROLE ar_db_landing_scd_r"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "REVOKE"
@@ -667,13 +739,15 @@ def test_REVOKE():
 
 
 def test_ROLLBACK():
+    """Test to parse a ROLLBACK query."""
     query = """ROLLBACK"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "ROLLBACK"
-    assert qp.source_object == []
+    assert qp.source_object == ['unparceble']
 
 
 def test_SET():
+    """Test to parse a SET query."""
     query = """set CLIENT_METADATA_REQUEST_USE_CONNECTION_CTX=TRUE;"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "SET"
@@ -681,6 +755,7 @@ def test_SET():
 
 
 def test_LIST_FILES():
+    """Test to parse a LIST FILES query."""
     query = """list '@DEV_DDS_SPP.KWEDENBERG_POC."RC146MDX2H9D2XD8 (Stage)"/streamlit_app.py';"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "LIST"
@@ -688,21 +763,18 @@ def test_LIST_FILES():
 
 
 def test_SHOW():
+    """Test to parse a SHOW query."""
     query = """show parameters like 'query_tag' in session"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "SHOW"
-    assert qp.source_object == []
+    assert qp.source_object == ['Not identified']
 
 
 def test_TRUNCATE_TABLE():
+    """Test to parse a TRUNCATE TABLE query."""
     query = """TRUNCATE TABLE "DATA_LOADER_STATUS"."attrep_changes1BAC39E90926EA78"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "TRUNCATE TABLE"
     assert qp.source_object == ["data_loader_status", "attrep_changes1bac39e90926ea78"]
 
 
-def test_UNKNOWN():
-    query = """<redacted>"""
-    qp = QueryParser(logger, query)
-    assert qp.query_type == "<REDACTED>"
-    assert qp.source_object == []
