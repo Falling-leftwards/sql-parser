@@ -61,13 +61,13 @@ def test_redacted():
     query = """<redacted>"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "<REDACTED>"
-    assert qp.source_object == ['Not identified']
+    assert qp.source_object == ["Not identified"]
 
 
 def test_truncate():
     """Test to parse a TRUNCATE TABLE query."""
     query = """TRUNCATE TABLE 'DATA_LOADER_STATUS'.'attrep_changesD8492F6541312D7'"""
-    qp = QueryParser(logger, query )
+    qp = QueryParser(logger, query)
     assert qp.query_type == "TRUNCATE TABLE"
     assert qp.source_object == ["data_loader_status", "attrep_changesd8492f6541312d7"]
 
@@ -75,15 +75,16 @@ def test_truncate():
 def test_alter_session():
     """Test to parse an ALTER SESSION query."""
     query = """ALTER SESSION SET JDBC_QUERY_RESULT_FORMAT='JSON'"""
-    qp = QueryParser(logger, query )
+    qp = QueryParser(logger, query)
     assert qp.query_type == "ALTER SESSION"
-    assert qp.source_object == ['Not identified']
-
+    assert qp.source_object == ["Not identified"]
 
 
 def test_create_or_replace():
     """Test to parse a CREATE OR REPLACE TABLE query."""
-    query = """CREATE OR REPLACE TABLE "DB1"."TABLE_A" AS SELECT * FROM "DB2"."TABLE_B" """
+    query = (
+        """CREATE OR REPLACE TABLE "DB1"."TABLE_A" AS SELECT * FROM "DB2"."TABLE_B" """
+    )
     qp = QueryParser(logger, query)
     assert qp.query_type == "CREATE OR REPLACE"
     assert qp.source_object == ["db1", "table_a"]
@@ -238,7 +239,8 @@ def test_BEGIN_TRANSACTION():
     query = """BEGIN"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "BEGIN"
-    assert qp.source_object == ['unparceble']
+    assert qp.source_object == ["unparceble"]
+
 
 def test_CALL():
     """Test to parse a CALL query."""
@@ -253,7 +255,7 @@ def test_COMMIT():
     query = """commit"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "COMMIT"
-    assert qp.source_object == ['unparceble']
+    assert qp.source_object == ["unparceble"]
 
 
 def test_COPY():
@@ -613,7 +615,7 @@ def test_GET_FILES():
     query = """GET '@worksheets_app.public.blobs/projects/783127510512160772/888184962c7c4a5f6cb7b1c3b433659d' 'file:///'"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "GET"
-    assert qp.source_object == ['unparceble']
+    assert qp.source_object == ["unparceble"]
 
 
 def test_GRANT():
@@ -662,7 +664,7 @@ COMMIT;
 """
     qp = QueryParser(logger, query)
     assert qp.query_type == "BEGIN TRANSACTION"
-    assert qp.source_object == ['unparceble']
+    assert qp.source_object == ["unparceble"]
 
 
 def test_PUT_FILES():
@@ -670,7 +672,7 @@ def test_PUT_FILES():
     query = """PUT 'file:///11305ce8e2b425d90e1c61424eaf4a5f' '@worksheets_app.public.blobs/projects/1109056001759335584'"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "PUT"
-    assert qp.source_object == ['unparceble']
+    assert qp.source_object == ["unparceble"]
 
 
 def test_REMOVE_FILES():
@@ -743,7 +745,7 @@ def test_ROLLBACK():
     query = """ROLLBACK"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "ROLLBACK"
-    assert qp.source_object == ['unparceble']
+    assert qp.source_object == ["unparceble"]
 
 
 def test_SET():
@@ -767,7 +769,7 @@ def test_SHOW():
     query = """show parameters like 'query_tag' in session"""
     qp = QueryParser(logger, query)
     assert qp.query_type == "SHOW"
-    assert qp.source_object == ['Not identified']
+    assert qp.source_object == ["Not identified"]
 
 
 def test_TRUNCATE_TABLE():
@@ -776,5 +778,3 @@ def test_TRUNCATE_TABLE():
     qp = QueryParser(logger, query)
     assert qp.query_type == "TRUNCATE TABLE"
     assert qp.source_object == ["data_loader_status", "attrep_changes1bac39e90926ea78"]
-
-

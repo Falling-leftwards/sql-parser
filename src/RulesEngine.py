@@ -1,6 +1,4 @@
 """A rules engine to analyse queries and determine notification status."""
-import json
-import logging
 import re
 
 
@@ -25,7 +23,7 @@ class RulesEngine:
 
     def analyse(self):
         """Analyse queries and determin notification status.
-        
+
         and contains the logic to compare the query to the exception.
         The function will return a boolean value.
         True if the query does not match any of the exceptions.
@@ -34,7 +32,7 @@ class RulesEngine:
             match_who = False
             match_what = False
             match_where = False
-            self.logger.debug(f"rule test initated")
+            self.logger.debug("rule test initated")
 
             if re.search(rule["who"].lower(), self.who):
                 match_who = True
