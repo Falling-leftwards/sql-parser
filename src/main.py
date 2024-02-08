@@ -22,9 +22,8 @@ class SnowGuardLogs:
         self.snowflake_credentials = snowflake_connection
         self.query_whiteList = query_whiteList
         self.logger.info("SnowGuardLogs object initialised")
-        self.main()
 
-    def main(self):
+    def run(self):
         """Main function for the SnowGuardLogs object."""
         self.logger.info("Getting Snowflake connection")
         try:
