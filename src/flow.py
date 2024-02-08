@@ -18,7 +18,7 @@ def SnowflakeMonitor():
 
     It will get the last 6 hours of query history and analyse the queries.
     it will compare the queries to the exceptions found in exception.json.
-    If the query does not match any of the exceptions 
+    If the query does not match any of the exceptions
     it will send a notification to the teams channel.
     """
     logger = get_run_logger()

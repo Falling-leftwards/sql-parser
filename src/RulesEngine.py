@@ -25,7 +25,7 @@ class RulesEngine:
 
     def analyse(self):
         """Analyse queries and determin notification status.
-        
+
         and contains the logic to compare the query to the exception.
         The function will return a boolean value.
         True if the query does not match any of the exceptions.
@@ -47,7 +47,6 @@ class RulesEngine:
                     match_where = True
 
             if (match_who == True) & (match_where == True) & (match_what == True):
-
                 self.notification = False
 
             self.logger.debug(f"rule: {rule}")

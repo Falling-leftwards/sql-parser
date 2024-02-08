@@ -7,14 +7,15 @@ from src.QueryParser import QueryParser
 from src.RulesEngine import RulesEngine
 
 
-class  SnowGuardLogs:
+class SnowGuardLogs:
     """System logic for gathering and analysing the snowflag query history.
-    
+
     This function contains the core logic of the system
     that is independent of the deployment mechanism.
     It will need to be called with arguments that provide the neccecary
     credentials, as well as pathway for notification.
     """
+
     def __init__(self, logger, snowflake_credentials, query_whiteList):
         """Initialise the SnowGuardLogs object."""
         self.logger = logger
@@ -33,8 +34,8 @@ class  SnowGuardLogs:
             self.logger.info("Snowflake connection successful")
         except Exception as e:
             self.logger.error("Failed to get snowflake connection")
-            raise e("Snowflake connection failed, Check provided credentials ") 
-        
+            raise e("Snowflake connection failed, Check provided credentials ")
+
         snowflake_account_usage_query = """
         SELECT
         START_TIME,
@@ -55,9 +56,11 @@ class  SnowGuardLogs:
             AND (START_TIME >= DATEADD(HOUR, -6, CURRENT_TIMESTAMP()))
         ORDER BY START_TIME DESC
         """
-        
+
         try:
-            query_result = perform_snowflake_query(self.logger, snowflake_connection, snowflake_account_usage_query)
+            query_result = perform_snowflake_query(
+                self.logger, snowflake_connection, snowflake_account_usage_query
+            )
             self.logger.info("Query executed succsessful")
         except Exception as e:
             self.logger.error("Failed to get query result")
@@ -86,7 +89,7 @@ class  SnowGuardLogs:
 
             query_creator = snowflake_query[1]
             self.logger.debug(f"Query creator: {query_creator}")
-            
+
             query_counter += 1
             self.logger.debug(f"{query_counter} queries parsed")
 
@@ -98,11 +101,11 @@ class  SnowGuardLogs:
 
             self.logger.debug(f"Assessing rules compliance for query {query_counter}")
             query_compliance = RulesEngine(
-                self.logger, 
-                self.query_whiteList, 
-                query_creator, 
-                query_object, 
-                query_type
+                self.logger,
+                self.query_whiteList,
+                query_creator,
+                query_object,
+                query_type,
             )
             self.logger.debug(f"Analysis result: {query_compliance.notification}")
             if query_compliance.notification is True:
