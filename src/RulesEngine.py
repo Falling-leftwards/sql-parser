@@ -45,7 +45,6 @@ class RulesEngine:
                     match_where = True
 
             if (match_who == True) & (match_where == True) & (match_what == True):
-
                 self.notification = False
 
             self.logger.debug(f"rule: {rule}")
