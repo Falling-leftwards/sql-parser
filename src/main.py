@@ -19,7 +19,7 @@ class SnowGuardLogs:
     def __init__(self, logger, snowflake_credentials, query_whiteList):
         """Initialise the SnowGuardLogs object."""
         self.logger = logger
-        self.snowflake_credentials = snowflake_connection
+        self.snowflake_credentials = snowflake_credentials,
         self.query_whiteList = query_whiteList
         self.logger.info("SnowGuardLogs object initialised")
 
