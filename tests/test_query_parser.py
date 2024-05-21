@@ -1,5 +1,5 @@
 """Tests for the query_parser module."""
-from src.query_parser import QueryParser
+from src.QueryParser import QueryParser
 import logging
 
 logger = logging.getLogger(__name__)
